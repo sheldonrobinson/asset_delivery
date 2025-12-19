@@ -11,7 +11,7 @@ Future<void> main(List<String> arguments) async {
   final assetPackName = arguments[0];
   final androidDir = Directory('android/$assetPackName');
   final rootDir = Directory.current.path;
-  final settingsGradle = File('$rootDir/android/settingsadle');
+  final settingsGradle = File('$rootDir/android/settings.gradle');
   final settingsGradleKts = File('$rootDir/android/settings.gradle.kts');
   final foundSettingsGradle = settingsGradle.existsSync();
   final foundSettingsGradleKts = settingsGradleKts.existsSync();
@@ -86,11 +86,18 @@ Future<void> main(List<String> arguments) async {
     print('Asset pack directory "$assetPackName" already exists.');
   }
 
-  final appBuildGradleFile = File('$rootDir/android/app/build.gradle');
-  if (!appBuildGradleFile.existsSync()) {
+  final appBuildGradle = File('$rootDir/android/app/build.gradle');
+  final appBuildGradleKts = File('$rootDir/android/app/build.gradle.kts');
+  final foundAppBuildGradle = appBuildGradle.existsSync();
+  final foundAppBuildGradleKts = appBuildGradleKts.existsSync();
+
+
+  if (!(foundAppBuildGradle || foundAppBuildGradleKts)) {
     print('Error: build.gradle not found in the android/app directory.');
     exit(1);
   }
+
+  final appBuildGradleFile = foundAppBuildGradle ? appBuildGradle : appBuildGradleKts;
 
   final assetPacksPattern = RegExp(r'assetPacks\s*=\s*\[([^\]]*)\]');
   String appBuildGradleContent = appBuildGradleFile.readAsStringSync();
