@@ -99,7 +99,9 @@ Future<void> main(List<String> arguments) async {
 
   final appBuildGradleFile = foundAppBuildGradle ? appBuildGradle : appBuildGradleKts;
 
-  final assetPacksPattern = RegExp(r'assetPacks\s*=\s*\[([^\]]*)\]');
+  final assetPacksPattern = foundAppBuildGradle
+      ? RegExp(r'assetPacks\s*=\s*\[([^\]]*)\]')
+  :RegExp(r'assetPacks\s*\+=\s*listOf\(([^\]]*)\)');
   String appBuildGradleContent = appBuildGradleFile.readAsStringSync();
 
   if (assetPacksPattern.hasMatch(appBuildGradleContent)) {
@@ -111,7 +113,9 @@ Future<void> main(List<String> arguments) async {
             match.group(1)!.split(',').map((e) => e.trim()).toList();
         if (!existingPacks.contains('":$assetPackName"')) {
           existingPacks.add('":$assetPackName"');
-          return 'assetPacks = [${existingPacks.join(', ')}]';
+          return foundAppBuildGradle ?
+          'assetPacks = [${existingPacks.join(', ')}]'
+          : 'assetPacks += listOf(${existingPacks.join(', ')})';
         }
         return match.group(0)!; // No change needed
       },
@@ -121,9 +125,12 @@ Future<void> main(List<String> arguments) async {
     // Add a new `assetPacks` property if it doesn't exist
     final androidBlockPattern = RegExp(r'android\s*{');
     if (androidBlockPattern.hasMatch(appBuildGradleContent)) {
+      final assetPackStatement = foundAppBuildGradle ?
+      'assetPacks = [":$assetPackName"]'
+          : 'assetPacks += listOf(":$assetPackName")';
       appBuildGradleContent = appBuildGradleContent.replaceFirst(
         androidBlockPattern,
-        'android {\n    assetPacks = [":$assetPackName"]',
+        'android {\n    $assetPackStatement',
       );
       print('Added assetPacks to app/build.gradle with ":$assetPackName"');
     } else {
