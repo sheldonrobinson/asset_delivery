@@ -11,14 +11,19 @@ Future<void> main(List<String> arguments) async {
   final assetPackName = arguments[0];
   final androidDir = Directory('android/$assetPackName');
   final rootDir = Directory.current.path;
+  final settingsGradle = File('$rootDir/android/settingsadle');
+  final settingsGradleKts = File('$rootDir/android/settings.gradle.kts');
+  final foundSettingsGradle = settingsGradle.existsSync();
+  final foundSettingsGradleKts = settingsGradleKts.existsSync();
 
-  final settingsFile = File('$rootDir/android/settings.gradle');
-  if (!settingsFile.existsSync()) {
-    print('Error: settings.gradle not found in the Android directory.');
+  if (!(foundSettingsGradle || foundSettingsGradleKts)) {
+    print('Error: settings file not found in the Android directory.');
     exit(1);
   }
+  
+  final settingsFile = foundSettingsGradle ? settingsGradle : settingsGradleKts;
 
-  final includeStatement = "include ':$assetPackName'";
+  final includeStatement = foundSettingsGradle ? "include ':$assetPackName'" : "include(\":$assetPackName\")";
   final settingsContent = settingsFile.readAsStringSync();
 
   final lines = settingsContent.split('\n');
